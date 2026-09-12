@@ -25,21 +25,25 @@ load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/niyamsetu")
 
-try:
-    import certifi
-    _client = MongoClient(
-        MONGO_URI,
-        serverSelectionTimeoutMS=10000,
-        connectTimeoutMS=10000,
-        tlsCAFile=certifi.where(),
-        tls=True,
-    )
-    _client.admin.command("ping")
-    print("[NiyamSetu] ✅  MongoDB connected successfully.")
-except Exception as exc:
-    print(f"[NiyamSetu] ❌  MongoDB connection failed: {exc}")
-    print("[NiyamSetu] ⚠  App will start but DB features may not work.")
-    _client = None
+_client = None
+for attempt, kwargs in enumerate([
+    dict(tlsAllowInvalidCertificates=True),
+    dict(tls=False),
+    dict(),
+]):
+    try:
+        _client = MongoClient(
+            MONGO_URI,
+            serverSelectionTimeoutMS=10000,
+            connectTimeoutMS=10000,
+            **kwargs,
+        )
+        _client.admin.command("ping")
+        print(f"[NiyamSetu] ✅  MongoDB connected (attempt {attempt+1})")
+        break
+    except Exception as exc:
+        print(f"[NiyamSetu] ⚠  Attempt {attempt+1} failed: {exc}")
+        _client = None
 
 if _client is not None:
     db = _client.get_default_database()
