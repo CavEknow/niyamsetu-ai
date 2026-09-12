@@ -26,23 +26,20 @@ load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/niyamsetu")
 
 try:
-    import ssl as _ssl
-    _ssl_ctx = _ssl.create_default_context()
-    _ssl_ctx.check_hostname = False
-    _ssl_ctx.verify_mode = _ssl.CERT_NONE
+    import certifi
     _client = MongoClient(
         MONGO_URI,
-        serverSelectionTimeoutMS=5000,
-        connectTimeoutMS=5000,
+        serverSelectionTimeoutMS=10000,
+        connectTimeoutMS=10000,
+        tlsCAFile=certifi.where(),
         tls=True,
-        tlsAllowInvalidCertificates=True,
     )
-    # Verify connection on startup
     _client.admin.command("ping")
     print("[NiyamSetu] ✅  MongoDB connected successfully.")
-except errors.ServerSelectionTimeoutError as exc:
+except Exception as exc:
     print(f"[NiyamSetu] ❌  MongoDB connection failed: {exc}")
-    raise
+    print("[NiyamSetu] ⚠  App will start but DB features may not work.")
+    _client = None
 
 db = _client.get_default_database()
 

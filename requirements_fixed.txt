@@ -34,3 +34,4 @@ reportlab>=4.2.0
 # EasyOCR (optional — heavy 1GB download, uncomment if needed)
 # easyocr>=1.7.1
 gunicorn>=22.0.0
+certifi>=2024.0.0
