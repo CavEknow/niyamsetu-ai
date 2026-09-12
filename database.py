@@ -41,7 +41,22 @@ except Exception as exc:
     print("[NiyamSetu] ⚠  App will start but DB features may not work.")
     _client = None
 
-db = _client.get_default_database()
+if _client is not None:
+    db = _client.get_default_database()
+else:
+    db = type('MockDB', (), {'__getitem__': lambda self, x: type('MockCol', (), {
+        'find_one': lambda *a, **k: None,
+        'find': lambda *a, **k: [],
+        'insert_one': lambda *a, **k: type('R', (), {'inserted_id': None})(),
+        'count_documents': lambda *a, **k: 0,
+        'update_one': lambda *a, **k: None,
+        'create_index': lambda *a, **k: None,
+        'aggregate': lambda *a, **k: [],
+        'delete_one': lambda *a, **k: None,
+        'delete_many': lambda *a, **k: None,
+        'find_one_and_update': lambda *a, **k: None,
+        'insert_many': lambda *a, **k: None,
+    })()})()
 
 # ─────────────────────────────────────────
 #  Collections
