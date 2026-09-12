@@ -1,0 +1,36 @@
+# NiyamSetu AI v2 — Fixed requirements (Python 3.13 + Windows)
+# pip install -r requirements_fixed.txt
+
+# Web framework
+flask>=3.0.3
+flask-cors>=4.0.1
+
+# Auth & security
+flask-jwt-extended>=4.6.0
+bcrypt>=4.1.3
+
+# MongoDB
+pymongo>=4.7.3
+
+# Environment
+python-dotenv>=1.0.1
+
+# Image processing (Pillow 10.4+ supports Python 3.13)
+Pillow>=10.4.0
+
+# OCR
+pytesseract>=0.3.13
+opencv-python-headless>=4.9.0.80
+
+# QR code + barcode scanning
+pyzbar>=0.1.9
+
+# HTTP requests (for Open Food Facts barcode lookup)
+requests>=2.31.0
+
+# PDF reports
+reportlab>=4.2.0
+
+# EasyOCR (optional — heavy 1GB download, uncomment if needed)
+# easyocr>=1.7.1
+gunicorn>=22.0.0

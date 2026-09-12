@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NiyamSetu AI — Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0f2744; --blue: #2783DE; --green: #2e7d55; --red: #c0392b;
+    --orange: #e67e22; --purple: #7c3aed; --canvas: #f6f5f4;
+    --surface: #fff; --border: #e6e5e3; --muted: #7d7a75; --radius: 12px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--canvas); color: #2c2c2b; min-height: 100vh; }
+
+  /* NAV */
+  .nav { background: var(--navy); height: 56px; padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 800; font-size: 16px; }
+  .nav-dot { width: 28px; height: 28px; background: var(--blue); border-radius: 7px;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13.5px;
+    font-weight: 500; padding: 6px 12px; border-radius: 6px; transition: all 0.15s; }
+  .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .nav-links a.active { color: #fff; background: rgba(255,255,255,0.12); }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .nav-badge { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8);
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+    letter-spacing: 0.4px; text-transform: uppercase; }
+  .avatar-btn { width: 32px; height: 32px; background: var(--blue); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    font-size: 13px; font-weight: 700; cursor: pointer; border: none; }
+  .logout-btn { color: rgba(255,255,255,0.5); background: none; border: none;
+    font-size: 13px; cursor: pointer; padding: 6px 10px; border-radius: 6px; }
+  .logout-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+  /* PAGE */
+  .page { max-width: 1200px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  /* GREETING */
+  .greeting { margin-bottom: 28px; }
+  .greeting h1 { font-size: 26px; font-weight: 800; color: var(--navy); letter-spacing: -0.5px; }
+  .greeting p  { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr; } }
+  .stat-card { background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--accent, var(--blue)); }
+  .stat-card.green  { --accent: var(--green); }
+  .stat-card.red    { --accent: var(--red); }
+  .stat-card.orange { --accent: var(--orange); }
+  .stat-card.purple { --accent: var(--purple); }
+  .stat-icon { font-size: 24px; margin-bottom: 10px; }
+  .stat-value { font-size: 32px; font-weight: 800; color: var(--navy); line-height: 1; }
+  .stat-label { font-size: 13px; color: var(--muted); margin-top: 5px; font-weight: 500; }
+  .stat-delta { font-size: 12px; margin-top: 8px; font-weight: 600; }
+  .delta-up   { color: var(--green); }
+  .delta-down { color: var(--red); }
+
+  /* MAIN GRID */
+  .main-grid { display: grid; grid-template-columns: 1fr 360px; gap: 20px; }
+  @media (max-width: 960px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* CARD */
+  .card { background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px 24px; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .card-title { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .card-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .view-all { font-size: 12.5px; color: var(--blue); text-decoration: none; font-weight: 600; }
+  .view-all:hover { text-decoration: underline; }
+
+  /* INSPECTION TABLE */
+  .insp-table { width: 100%; border-collapse: collapse; }
+  .insp-table th { font-size: 11.5px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.4px; padding: 0 10px 10px;
+    text-align: left; border-bottom: 1px solid var(--border); }
+  .insp-table td { padding: 12px 10px; font-size: 13.5px; border-bottom: 1px solid #f3f2f0; }
+  .insp-table tr:last-child td { border-bottom: none; }
+  .insp-table tr:hover td { background: #fafaf9; }
+
+  /* Status badges */
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;
+    font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+  .badge-pass    { background: #d4edda; color: #1e6e40; }
+  .badge-fail    { background: #f8d7da; color: #721c24; }
+  .badge-review  { background: #fff3cd; color: #856404; }
+  .badge-admin   { background: #d6eaf8; color: #1a5276; }
+  .badge-inspector { background: #e8daef; color: #6c3483; }
+
+  /* CHART BAR */
+  .chart-wrap { margin-top: 4px; }
+  .chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .chart-label { font-size: 12.5px; color: var(--muted); width: 60px; flex-shrink: 0; text-align: right; }
+  .chart-bar-bg { flex: 1; background: #f0efed; border-radius: 4px; height: 22px; overflow: hidden; }
+  .chart-bar { height: 100%; border-radius: 4px; display: flex; align-items: center;
+    padding-left: 8px; font-size: 11.5px; font-weight: 700; color: #fff; min-width: 30px;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+  .bar-pass    { background: var(--green); }
+  .bar-fail    { background: var(--red); }
+  .bar-review  { background: var(--orange); }
+  .chart-count { font-size: 12.5px; font-weight: 700; color: var(--navy); width: 30px; }
+
+  /* QUICK ACTIONS */
+  .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .quick-btn { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; padding: 18px 10px; border-radius: 10px; border: 1.5px solid var(--border);
+    cursor: pointer; text-decoration: none; transition: all 0.15s; background: var(--canvas); }
+  .quick-btn:hover { border-color: var(--blue); background: #eef5fd; transform: translateY(-1px); }
+  .quick-icon { font-size: 24px; }
+  .quick-label { font-size: 12.5px; font-weight: 700; color: var(--navy); text-align: center; }
+
+  /* ACTIVITY FEED */
+  .activity-item { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0;
+    border-bottom: 1px solid #f3f2f0; }
+  .activity-item:last-child { border-bottom: none; }
+  .act-icon { width: 32px; height: 32px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+    background: #f0efed; }
+  .act-text { font-size: 13px; color: #444; line-height: 1.4; }
+  .act-text strong { color: var(--navy); }
+  .act-time { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+  /* SKELETON */
+  .skeleton { background: linear-gradient(90deg, #f0efed 25%, #e8e6e3 50%, #f0efed 75%);
+    background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 36px 20px; color: var(--muted); }
+  .empty-icon { font-size: 36px; margin-bottom: 8px; }
+  .empty-text { font-size: 13.5px; }
+
+  /* COMPLIANCE RING */
+  .ring-wrap { display: flex; align-items: center; gap: 20px; }
+  .ring { width: 80px; height: 80px; flex-shrink: 0; }
+  .ring-stats { display: flex; flex-direction: column; gap: 4px; }
+  .ring-stat { font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .ring-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy);
+    color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13.5px;
+    font-weight: 500; opacity: 0; transform: translateY(12px);
+    transition: all 0.3s; z-index: 999; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-dot">🏛️</div>
+    NiyamSetu AI
+  </div>
+  <div class="nav-links">
+    <a href="/dashboard" class="active">📊 Dashboard</a>
+    <a href="/inspect">🔍 Label Scan</a>
+    <a href="/qr">📷 QR Scan</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-badge" id="roleBadge">admin</span>
+    <span style="color:rgba(255,255,255,0.7);font-size:13px;" id="navName">User</span>
+    <button class="logout-btn" onclick="logout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- GREETING -->
+  <div class="greeting">
+    <h1 id="greetingText">👋 Welcome back!</h1>
+    <p id="greetingDate"></p>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">🔍</div>
+      <div class="stat-value" id="statTotal">--</div>
+      <div class="stat-label">Total Inspections</div>
+      <div class="stat-delta delta-up" id="statTotalDelta"></div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon">✅</div>
+      <div class="stat-value" id="statPass">--</div>
+      <div class="stat-label">Compliant Labels</div>
+      <div class="stat-delta delta-up" id="statPassPct"></div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-icon">❌</div>
+      <div class="stat-value" id="statFail">--</div>
+      <div class="stat-label">Non-Compliant</div>
+      <div class="stat-delta delta-down" id="statFailPct"></div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-value" id="statReview">--</div>
+      <div class="stat-label">Needs Review</div>
+      <div class="stat-delta" id="statReviewPct"></div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Recent Inspections -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">📄 Recent Inspections</div>
+            <div class="card-sub">Last 10 label scans</div>
+          </div>
+          <a href="/inspect" class="view-all">New scan →</a>
+        </div>
+        <div id="inspTable">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="skeleton" style="height:40px;"></div>
+            <div class="skeleton" style="height:40px;"></div>
+            <div class="skeleton" style="height:40px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compliance chart -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">📊 Compliance Breakdown</div>
+            <div class="card-sub">By inspection result</div>
+          </div>
+        </div>
+        <div class="chart-wrap" id="complianceChart">
+          <div class="chart-row">
+            <div class="chart-label">Pass</div>
+            <div class="chart-bar-bg"><div class="chart-bar bar-pass skeleton" style="width:60%;"></div></div>
+            <div class="chart-count">--</div>
+          </div>
+          <div class="chart-row">
+            <div class="chart-label">Fail</div>
+            <div class="chart-bar-bg"><div class="chart-bar bar-fail skeleton" style="width:25%;"></div></div>
+            <div class="chart-count">--</div>
+          </div>
+          <div class="chart-row">
+            <div class="chart-label">Review</div>
+            <div class="chart-bar-bg"><div class="chart-bar bar-review skeleton" style="width:15%;"></div></div>
+            <div class="chart-count">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">⚡ Quick Actions</div>
+        </div>
+        <div class="quick-grid">
+          <a href="/inspect" class="quick-btn">
+            <div class="quick-icon">🔍</div>
+            <div class="quick-label">New Label Scan</div>
+          </a>
+          <a href="/qr" class="quick-btn">
+            <div class="quick-icon">📷</div>
+            <div class="quick-label">QR / Barcode</div>
+          </a>
+          <a href="#" class="quick-btn" onclick="exportCSV()">
+            <div class="quick-icon">📅</div>
+            <div class="quick-label">Export CSV</div>
+          </a>
+          <a href="#" class="quick-btn" onclick="refreshStats()">
+            <div class="quick-icon">🔄</div>
+            <div class="quick-label">Refresh</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Compliance ring / summary -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">🎯 Compliance Score</div>
+        </div>
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f0efed" stroke-width="3"/>
+            <circle id="ringArc" cx="18" cy="18" r="15.9" fill="none" stroke="#2e7d55"
+              stroke-width="3" stroke-dasharray="0 100" stroke-linecap="round"
+              transform="rotate(-90 18 18)" style="transition:stroke-dasharray 1s ease;"/>
+            <text x="18" y="20.5" text-anchor="middle" font-size="7" font-weight="800"
+              fill="#0f2744" id="ringPct">--</text>
+          </svg>
+          <div class="ring-stats">
+            <div class="ring-stat"><div class="ring-dot" style="background:var(--green);"></div><span id="rPass">Pass: --</span></div>
+            <div class="ring-stat"><div class="ring-dot" style="background:var(--red);"></div><span id="rFail">Fail: --</span></div>
+            <div class="ring-stat"><div class="ring-dot" style="background:var(--orange);"></div><span id="rReview">Review: --</span></div>
+            <div class="ring-stat" style="margin-top:6px;font-weight:700;color:var(--navy);"><span id="rTotal">Total: --</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">📡 Recent Activity</div>
+        </div>
+        <div id="activityFeed">
+          <div class="skeleton" style="height:20px;margin-bottom:8px;"></div>
+          <div class="skeleton" style="height:20px;margin-bottom:8px;"></div>
+          <div class="skeleton" style="height:20px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const token = localStorage.getItem('ns_token');
+  const name  = localStorage.getItem('ns_name') || 'User';
+  const role  = localStorage.getItem('ns_role') || 'inspector';
+
+  if (!token) { window.location.href = '/login'; }
+
+  // Greeting
+  document.getElementById('navName').textContent = name;
+  document.getElementById('roleBadge').textContent = role;
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? '🌅 Good morning' : hour < 17 ? '☀️ Good afternoon' : '🌙 Good evening';
+  document.getElementById('greetingText').textContent = `${greet}, ${name}!`;
+  document.getElementById('greetingDate').textContent =
+    new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Auth headers
+  const H = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+  // Load dashboard stats
+  async function refreshStats() {
+    try {
+      const res  = await fetch('/api/dashboard/stats', { headers: H });
+      if (res.status === 401) { logout(); return; }
+      const data = await res.json();
+      const s    = data.summary || {};
+      const total   = s.total   || 0;
+      const passes  = s.pass    || 0;
+      const fails   = s.fail    || 0;
+      const reviews = s.review  || 0;
+      const pct = total > 0 ? Math.round((passes / total) * 100) : 0;
+
+      document.getElementById('statTotal').textContent  = total;
+      document.getElementById('statPass').textContent   = passes;
+      document.getElementById('statFail').textContent   = fails;
+      document.getElementById('statReview').textContent = reviews;
+      document.getElementById('statPassPct').textContent   = total ? `${pct}% pass rate` : '';
+      document.getElementById('statFailPct').textContent   = total ? `${Math.round(fails/total*100)}% fail rate` : '';
+      document.getElementById('statReviewPct').textContent = total ? `${Math.round(reviews/total*100)}% need review` : '';
+
+      // Ring
+      document.getElementById('ringArc').setAttribute('stroke-dasharray', `${pct} ${100 - pct}`);
+      document.getElementById('ringPct').textContent = `${pct}%`;
+      document.getElementById('rPass').textContent   = `Pass: ${passes}`;
+      document.getElementById('rFail').textContent   = `Fail: ${fails}`;
+      document.getElementById('rReview').textContent = `Review: ${reviews}`;
+      document.getElementById('rTotal').textContent  = `Total: ${total}`;
+
+      // Chart
+      const maxVal = Math.max(passes, fails, reviews, 1);
+      document.getElementById('complianceChart').innerHTML = [
+        chartRow('Pass',   passes,  maxVal, 'bar-pass'),
+        chartRow('Fail',   fails,   maxVal, 'bar-fail'),
+        chartRow('Review', reviews, maxVal, 'bar-review'),
+      ].join('');
+
+    } catch (e) { showToast('⚠️ Could not load stats'); }
+  }
+
+  function chartRow(label, count, max, cls) {
+    const pct = max > 0 ? Math.round((count / max) * 100) : 0;
+    return `
+      <div class="chart-row">
+        <div class="chart-label">${label}</div>
+        <div class="chart-bar-bg"><div class="chart-bar ${cls}" style="width:${Math.max(pct,8)}%;">${count > 0 ? count : ''}</div></div>
+        <div class="chart-count">${count}</div>
+      </div>`;
+  }
+
+  // Load recent inspections
+  async function loadInspections() {
+    try {
+      const res  = await fetch('/api/inspections?limit=10', { headers: H });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const rows = data.inspections || data.items || data || [];
+
+      if (!rows.length) {
+        document.getElementById('inspTable').innerHTML = `
+          <div class="empty"><div class="empty-icon">🔍</div>
+          <div class="empty-text">No inspections yet.<br>
+          <a href="/inspect" style="color:var(--blue);">Run your first label scan →</a></div></div>`;
+        return;
+      }
+
+      const html = `
+        <table class="insp-table">
+          <thead><tr>
+            <th>Commodity</th><th>Source</th><th>Status</th><th>Score</th><th>Time</th>
+          </tr></thead>
+          <tbody>${rows.map(r => {
+            const status = r.overall_status || 'REVIEW';
+            const cls    = status === 'COMPLIANT' ? 'badge-pass' : status === 'NON_COMPLIANT' ? 'badge-fail' : 'badge-review';
+            const label  = status === 'COMPLIANT' ? '✅ Pass' : status === 'NON_COMPLIANT' ? '❌ Fail' : '⚠️ Review';
+            const score  = r.summary?.score ?? '--';
+            const name   = r.fields?.commodity || r.commodity || 'Unknown';
+            const src    = r.source === 'qr_scan' ? '📷 QR' : '🔍 OCR';
+            const time   = r.created_at ? new Date(r.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '--';
+            return `<tr>
+              <td style="font-weight:600;color:var(--navy);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${name}">${name}</td>
+              <td style="color:var(--muted);">${src}</td>
+              <td><span class="badge ${cls}">${label}</span></td>
+              <td style="font-weight:700;">${score}${score !== '--' ? '%' : ''}</td>
+              <td style="color:var(--muted);">${time}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`;
+      document.getElementById('inspTable').innerHTML = html;
+    } catch { 
+      document.getElementById('inspTable').innerHTML = `
+        <div class="empty"><div class="empty-icon">🔍</div>
+        <div class="empty-text">No inspections yet.<br>
+        <a href="/inspect" style="color:var(--blue);">Run your first label scan →</a></div></div>`;
+    }
+  }
+
+  // Activity feed (from recent inspections)
+  async function loadActivity() {
+    try {
+      const res  = await fetch('/api/inspections?limit=5', { headers: H });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const rows = data.inspections || data.items || data || [];
+
+      if (!rows.length) {
+        document.getElementById('activityFeed').innerHTML =
+          '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">No activity yet.</div></div>';
+        return;
+      }
+      const icons = { 'COMPLIANT': '✅', 'NON_COMPLIANT': '❌', 'REVIEW': '⚠️' };
+      const html = rows.map(r => {
+        const icon = icons[r.overall_status] || '🔍';
+        const commodity = r.fields?.commodity || 'Label';
+        const score = r.summary?.score ?? '';
+        const time  = r.created_at ? new Date(r.created_at).toLocaleString('en-IN',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
+        return `<div class="activity-item">
+          <div class="act-icon">${icon}</div>
+          <div>
+            <div class="act-text"><strong>${commodity}</strong> scanned — ${r.overall_status?.replace('_',' ') || 'Result pending'}${score ? ' (' + score + '%)' : ''}</div>
+            <div class="act-time">${time}</div>
+          </div>
+        </div>`;
+      }).join('');
+      document.getElementById('activityFeed').innerHTML = html;
+    } catch {
+      document.getElementById('activityFeed').innerHTML =
+        '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">No activity yet.</div></div>';
+    }
+  }
+
+  // Export CSV
+  function exportCSV() {
+    showToast('📅 Export will be available in v2.1');
+  }
+
+  // Logout
+  function logout() {
+    fetch('/api/auth/logout', { method: 'POST', headers: H }).catch(() => {});
+    localStorage.removeItem('ns_token');
+    localStorage.removeItem('ns_name');
+    localStorage.removeItem('ns_role');
+    window.location.href = '/login';
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Init
+  refreshStats();
+  loadInspections();
+  loadActivity();
+</script>
+</body>
+</html>
